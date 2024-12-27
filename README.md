@@ -35,6 +35,7 @@ kubectl run my-operb-testbox \
 --overrides='{ "spec": { "serviceAccount": "operbsa" } }' \
 --command -- sleep 3600
 kubectl get pod -n operb
+kubectl exec -i -t my-operb-testbox -n operb -- /bin/sh -c "gem install typhoeus"
 kubectl cp -n operb operb/test.rb my-operb-testbox:/tmp/test.rb
 kubectl exec -i -t my-operb-testbox -n operb -- /bin/sh -c "/tmp/test.rb"
 kubectl delete pod -n operb my-operb-testbox
