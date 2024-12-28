@@ -33,7 +33,8 @@ request.on_headers do |response|
 end
 request.on_body do |chunk|
     $logger.info "chunk.size=#{chunk.size}"
-    $logger.info "chunk=#{chunk}"
+    $logger.info "chunk: ---#{chunk}---"
+    JSON.parse(chunk)
 end
 request.on_complete do |response|
   $logger.info 'on_complete'

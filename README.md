@@ -26,7 +26,7 @@ curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISE
 curl --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISERVER}/api/v1/namespaces/operb/pods
 ```
 
-# Test Ruby container
+# Testing Ruby container
 
 ```
 kubectl run my-operb-testbox \
