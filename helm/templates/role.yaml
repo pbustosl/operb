@@ -4,6 +4,6 @@ metadata:
   name: {{ .Values.role.name }}
   namespace: {{ .Values.namespace }}
 rules:
-  - apiGroups: [""]
-    resources: ["pods"]
+  - apiGroups: ["operb.example.io"]
+    resources: ["foos"]
     verbs: ["get", "list", "watch"]
