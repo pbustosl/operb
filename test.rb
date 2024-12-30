@@ -6,7 +6,7 @@ require 'json'
 module K8s
   API_SERVER = 'https://kubernetes.default.svc'
   SERVICE_ACCOUNT = '/var/run/secrets/kubernetes.io/serviceaccount'
-  TOKEN = File.read("#{K8S_SERVICE_ACCOUNT}/token")
+  TOKEN = File.read("#{SERVICE_ACCOUNT}/token")
 end
 
 class DeployWatcher
@@ -41,7 +41,7 @@ class DeployWatcher
     response = request.response
     raise "list request failed response.code=#{response.code}" if response.code != 200
     obj_list = JSON.parse(response.body)
-    $logger.debug "list response=#{JSON.pretty_generate(obj_list)}"
+    # $logger.debug "list response=#{JSON.pretty_generate(obj_list)}"
     obj_list['items'].each do |item|
       $logger.info "list item=#{item['metadata']['name']}"
     end
@@ -51,8 +51,8 @@ class DeployWatcher
   end
 
   def on_body(chunk)
-    $logger.debug "watch chunk.size=#{chunk.size}"
-    $logger.debug "watch chunk: ---#{chunk}---"
+    # $logger.debug "watch chunk.size=#{chunk.size}"
+    # $logger.debug "watch chunk: ---#{chunk}---"
     chunk.each_line do |line|
       event = JSON.parse(line)
       $logger.info "watch event=#{event['type']} #{event['object']['metadata']['name']}"
