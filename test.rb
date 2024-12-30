@@ -22,7 +22,7 @@ class DeployWatcher
   def watch
     resource_version = list
     $logger.info "watch resource_version=#{resource_version}"
-    request = Typhoeus::Request.new("#{@base_url}?watch=1&resource_version=#{resource_version}", @req_opts)
+    request = Typhoeus::Request.new("#{@base_url}?watch=1&resourceVersion=#{resource_version}", @req_opts)
     request.on_headers do |response|
       raise "watch request failed response.code=#{response.code}" if response.code != 200
       $logger.info "watch on_headers response.code=#{response.code}"
