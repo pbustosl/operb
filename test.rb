@@ -9,14 +9,34 @@ module K8s
   TOKEN = File.read("#{SERVICE_ACCOUNT}/token")
 end
 
-class DeployWatcher
+class Deployments
 
-  def initialize(namespace, resource)
+    def initialize(namespace, resource)
+      @base_url = "#{K8s::API_SERVER}/apis/operb.example.io/v1/namespaces/#{namespace}/#{resource}"
+      @req_opts = {
+        cainfo: "#{K8s::SERVICE_ACCOUNT}/ca.crt",
+        headers: { Authorization: "Bearer #{K8s::TOKEN}" }
+      }
+    end
+
+    def create(obj)
+      $logger.info "create deployment=#{obj['metadata']['name']}"
+    end
+
+    def delete(obj)
+      $logger.info "delete deployment=#{obj['metadata']['name']}"
+    end
+end
+
+class EventsWatcher
+
+  def initialize(namespace, resource, deployments)
     @base_url = "#{K8s::API_SERVER}/apis/operb.example.io/v1/namespaces/#{namespace}/#{resource}"
     @req_opts = {
       cainfo: "#{K8s::SERVICE_ACCOUNT}/ca.crt",
       headers: { Authorization: "Bearer #{K8s::TOKEN}" }
     }
+    @deployments = deployments
   end
 
   def watch
@@ -32,7 +52,6 @@ class DeployWatcher
     end
     $logger.info 'watching...'
     request.run # blocking
-    $logger.info 'done watching'
   end
 
   def list
@@ -42,8 +61,9 @@ class DeployWatcher
     raise "list request failed response.code=#{response.code}" if response.code != 200
     obj_list = JSON.parse(response.body)
     # $logger.debug "list response=#{JSON.pretty_generate(obj_list)}"
-    obj_list['items'].each do |item|
-      $logger.info "list item=#{item['metadata']['name']}"
+    obj_list['items'].each do |obj|
+      $logger.info "list item=#{obj['metadata']['name']}"
+      @deployments.create(obj)
     end
     resource_version = obj_list['metadata']['resourceVersion']
     $logger.info "list resource_version=#{resource_version}"
@@ -56,6 +76,11 @@ class DeployWatcher
     chunk.each_line do |line|
       event = JSON.parse(line)
       $logger.info "watch event=#{event['type']} #{event['object']['metadata']['name']}"
+      if ['ADDED', 'MODIFIED'].include?(event['type'])
+        @deployments.create(event['object'])
+      elsif event['type'] == 'DELETED'
+        @deployments.delete(event['object'])
+      end
     end
   end
 
@@ -65,10 +90,11 @@ require 'logger'
 $logger = Logger.new(STDOUT)
 $logger.info 'starting'
 
-d = DeployWatcher.new('operb', 'foos')
+d = Deployments.new('operb', 'foos')
+w = EventsWatcher.new('operb', 'foos', d)
 
 # trick to force typhoeus exit on Ctrl-C
-request_thread = Thread.new { d.watch } # run watch in a separate thread
+request_thread = Thread.new { w.watch } # run watch in a separate thread
 begin
   request_thread.join # wait for the watch thread to complete
 rescue Interrupt
