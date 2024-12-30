@@ -3,17 +3,19 @@
 require 'typhoeus'
 require 'json'
 
+module K8s
+  API_SERVER = 'https://kubernetes.default.svc'
+  SERVICE_ACCOUNT = '/var/run/secrets/kubernetes.io/serviceaccount'
+  TOKEN = File.read("#{K8S_SERVICE_ACCOUNT}/token")
+end
+
 class DeployWatcher
 
-  K8S_API_SERVER = 'https://kubernetes.default.svc'
-  K8S_SERVICE_ACCOUNT = '/var/run/secrets/kubernetes.io/serviceaccount'
-  K8S_TOKEN = File.read("#{K8S_SERVICE_ACCOUNT}/token")
-
   def initialize(namespace, resource)
-    @base_url = "#{K8S_API_SERVER}/apis/operb.example.io/v1/namespaces/#{namespace}/#{resource}"
+    @base_url = "#{K8s::API_SERVER}/apis/operb.example.io/v1/namespaces/#{namespace}/#{resource}"
     @req_opts = {
-      cainfo: "#{K8S_SERVICE_ACCOUNT}/ca.crt",
-      headers: { Authorization: "Bearer #{K8S_TOKEN}" }
+      cainfo: "#{K8s::SERVICE_ACCOUNT}/ca.crt",
+      headers: { Authorization: "Bearer #{K8s::TOKEN}" }
     }
   end
 
