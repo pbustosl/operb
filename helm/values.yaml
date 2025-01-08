@@ -6,3 +6,5 @@ serviceAccount:
   name: operbsa
 role:
   name: operbrole
+clusterrole:
+  name: operbclusterrole
