@@ -1,8 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Values.role.name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespaceOverride }}
 rules:
   - apiGroups: ["operb.example.io"]
     resources: ["foos"]

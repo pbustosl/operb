@@ -1,8 +1,18 @@
-# Setting up the Service Account and rules
+# Docker image
+```
+podman build -t operb -f Dockerfile
+podman push operb localhost:5000/operb:1.0
+```
+
+# Helm
 ```
 kubectl create namespace operb
 helm delete operb
-helm upgrade --install operb operb/helm
+helm upgrade --install operb helm/
+```
+
+test rbac:
+```
 kubectl auth can-i list pod --as=system:serviceaccount:operb:operbsa -n operb
 ```
 

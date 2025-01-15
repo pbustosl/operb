@@ -1,12 +1,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Values.role.name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespaceOverride }}
 roleRef:
-  name: {{ .Values.role.name }}
+  name: {{ .Values.name }}
   kind: Role
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.serviceAccount.name }}
-    namespace: {{ .Values.namespace }}
+    name: {{ .Values.name }}
+    namespace: {{ .Values.namespaceOverride }}

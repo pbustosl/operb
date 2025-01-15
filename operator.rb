@@ -89,6 +89,7 @@ end
 require 'logger'
 $logger = Logger.new(STDOUT)
 $logger.info 'starting'
+$stdout.sync = true
 
 d = Deployments.new('operb', 'foos')
 w = EventsWatcher.new('operb', 'foos', d)
