@@ -93,12 +93,4 @@ $stdout.sync = true
 
 d = Deployments.new('operb', 'foos')
 w = EventsWatcher.new('operb', 'foos', d)
-
-# trick to force typhoeus exit on Ctrl-C
-request_thread = Thread.new { w.watch } # run watch in a separate thread
-begin
-  request_thread.join # wait for the watch thread to complete
-rescue Interrupt
-  $logger.info 'watch interrupted by user, exiting...'
-  exit!
-end
+w.watch
