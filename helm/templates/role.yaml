@@ -7,3 +7,7 @@ rules:
   - apiGroups: ["operb.example.io"]
     resources: ["foos"]
     verbs: ["get", "list", "watch"]
+  # to run helm list:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["list"]
