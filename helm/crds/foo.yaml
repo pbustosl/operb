@@ -16,12 +16,12 @@ spec:
             spec:
               type: object
               properties:
-                deploymentName:
+                chart:
                   type: string
-                replicas:
-                  type: integer
-                  minimum: 1
-                  maximum: 10
+                chartVersion:
+                  type: string
+                values:
+                  type: string
             status:
               type: object
               properties:

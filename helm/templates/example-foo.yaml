@@ -4,5 +4,8 @@ metadata:
   name: example-foo
   namespace: operb
 spec:
-  deploymentName: example-foo
-  replicas: 1
+  chart: oci://10.88.0.1:5000/helm-charts/foo
+  chartVersion: 1.0.0
+  values: |
+    name: hello
+    another: world
