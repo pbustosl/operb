@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Values.namespaceOverride }}
 rules:
   - apiGroups: ["operb.example.io"]
-    resources: ["foos"]
+    resources: ["helmcharts"]
     verbs: ["get", "list", "watch"]
   # to run helm list:
   - apiGroups: [""]

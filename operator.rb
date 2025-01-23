@@ -13,6 +13,7 @@ class Helm
 
     def install(obj)
       $logger.info "helm install chart=#{obj['metadata']['name']}"
+      $logger.info obj
     end
 
     def delete(obj)
@@ -87,5 +88,5 @@ $logger = Logger.new(STDOUT)
 $logger.info 'starting'
 $stdout.sync = true # no buffering, for kubectl logs
 
-ho = HelmOperator.new('operb', 'foos')
+ho = HelmOperator.new('operb', 'helmcharts')
 ho.reconcile # blocking

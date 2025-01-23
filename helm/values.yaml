@@ -4,7 +4,7 @@ namespaceOverride: operb
 deployment:
   image:
     repository: localhost:5000/operb
-    tag: "1.8"
+    tag: "1.9"
     pullPolicy: IfNotPresent
   resources:
     limits:
