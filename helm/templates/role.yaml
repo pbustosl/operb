@@ -11,3 +11,19 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["list"]
+  # to run helm install foo:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create"]
+  # to run helm install foo:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  # to run helm delete foo:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["delete"]
+  # to run helm delete foo:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "delete"]
