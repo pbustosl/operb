@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'tempfile'
 require 'typhoeus'
 require 'json'
 
@@ -7,24 +8,65 @@ module K8s
   API_SERVER = 'https://kubernetes.default.svc'
   SERVICE_ACCOUNT = '/var/run/secrets/kubernetes.io/serviceaccount'
   TOKEN = File.read("#{SERVICE_ACCOUNT}/token")
+  NAMESPACE = File.read("#{SERVICE_ACCOUNT}/namespace")
+end
+
+class HelmRelease
+  PREFIX = 'operb-'
+  attr_reader :name, :chart_url, :chart_version, :helm_pull_flags, :values
+  def initialize(obj)
+    @name = "#{PREFIX}#{obj['metadata']['name']}"
+    @chart_url = obj['spec']['chartURL']
+    @chart_version = obj['spec']['chartVersion']
+    @helm_pull_flags = obj['spec']['helmPullFlags']
+    @values = obj['spec']['values']
+  end
 end
 
 class Helm
 
-    def install(obj)
-      $logger.info "helm install chart=#{obj['metadata']['name']}"
-      $logger.info obj
+  def pull(release)
+    pkg = "/tmp/#{File.basename(release.name)}-#{release.chart_version}.tgz"
+    if File.exist?(pkg)
+      $logger.info "already pulled #{pkg}"
+    else
+      cmd = "helm pull #{release.chart_url} --version #{release.chart_version} #{release.helm_pull_flags} --destination /tmp/"
+      $logger.info cmd
+    end
+    pkg
+  end
+
+  def install(release)
+    pkg = pull(release)
+    values_file = Tempfile.new("#{release.name}.values.yaml")
+    begin
+      values_file.write(release.values)
+      cmd = "helm upgrade --install -f #{values_file.path} #{release.name} #{pkg}"
+      $logger.info cmd
+    ensure
+       values_file.close
+       # values_file.unlink
     end
 
-    def delete(obj)
-      $logger.info "helm delete chart=#{obj['metadata']['name']}"
-    end
+  end
+
+  def delete(releaseName)
+    cmd = "helm delete #{releaseName}"
+    $logger.info cmd
+  end
+
+  def list
+    cmd = "helm list --output json"
+    $logger.info cmd
+    response = "[]"
+    JSON.parse(response)
+  end
 end
 
 class HelmOperator
 
-  def initialize(namespace, resource)
-    @base_url = "#{K8s::API_SERVER}/apis/operb.example.io/v1/namespaces/#{namespace}/#{resource}"
+  def initialize
+    @base_url = "#{K8s::API_SERVER}/apis/operb.example.io/v1/namespaces/#{K8s::NAMESPACE}/helmreleases"
     @req_opts = {
       cainfo: "#{K8s::SERVICE_ACCOUNT}/ca.crt",
       headers: { Authorization: "Bearer #{K8s::TOKEN}" }
@@ -38,6 +80,7 @@ class HelmOperator
   end
 
   def reconcileOnce
+    to_delete = @helm.list
     request = Typhoeus::Request.new(@base_url, @req_opts)
     request.run # non-blocking
     response = request.response
@@ -45,8 +88,14 @@ class HelmOperator
     obj_list = JSON.parse(response.body)
     # $logger.debug "#{__method__} response=#{JSON.pretty_generate(obj_list)}"
     obj_list['items'].each do |obj|
-      $logger.info "#{__method__} item=#{obj['metadata']['name']}"
-      @helm.install(obj)
+      release = HelmRelease.new(obj)
+      $logger.info "#{__method__} item=#{release.name}"
+      to_delete.delete(release.name)
+      @helm.install(release)
+    end
+    to_delete.each do |releaseName|
+      $logger.info "remove unknown release #{releaseName}"
+      @helm.delete(releaseName)
     end
     resource_version = obj_list['metadata']['resourceVersion']
     $logger.info "#{__method__} resource_version=#{resource_version}"
@@ -74,9 +123,11 @@ class HelmOperator
       event = JSON.parse(line)
       $logger.info "watch event=#{event['type']} #{event['object']['metadata']['name']}"
       if ['ADDED', 'MODIFIED'].include?(event['type'])
-        @helm.install(event['object'])
+        release = HelmRelease.new(event['object'])
+        @helm.install(release)
       elsif event['type'] == 'DELETED'
-        @helm.delete(event['object'])
+        release = HelmRelease.new(event['object'])
+        @helm.delete(release.name)
       end
     end
   end
@@ -88,5 +139,5 @@ $logger = Logger.new(STDOUT)
 $logger.info 'starting'
 $stdout.sync = true # no buffering, for kubectl logs
 
-ho = HelmOperator.new('operb', 'helmcharts')
+ho = HelmOperator.new()
 ho.reconcile # blocking

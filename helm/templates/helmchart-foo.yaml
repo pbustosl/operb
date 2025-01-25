@@ -1,11 +1,12 @@
 apiVersion: operb.example.io/v1
-kind: HelmChart
+kind: HelmRelease
 metadata:
   name: foo
   namespace: operb
 spec:
-  chart: oci://10.88.0.1:5000/helm-charts/foo
+  chartURL: oci://10.88.0.1:5000/helm-charts/foo
   chartVersion: 1.0.0
+  helmPullFlags: "--plain-http"
   values: |
     name: hello
     another: world

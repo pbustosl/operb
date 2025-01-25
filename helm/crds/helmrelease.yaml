@@ -1,7 +1,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: helmcharts.operb.example.io
+  name: helmreleases.operb.example.io
 spec:
   group: operb.example.io
   versions:
@@ -16,9 +16,11 @@ spec:
             spec:
               type: object
               properties:
-                chart:
+                chartURL:
                   type: string
                 chartVersion:
+                  type: string
+                helmPullFlags:
                   type: string
                 values:
                   type: string
@@ -32,7 +34,7 @@ spec:
         # enables the status subresource
         status: {}
   names:
-    kind: HelmChart
-    plural: helmcharts
-    singular: helmchart
+    kind: HelmRelease
+    plural: helmreleases
+    singular: helmrelease
   scope: Namespaced
