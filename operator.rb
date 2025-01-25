@@ -3,6 +3,7 @@
 require 'tempfile'
 require 'typhoeus'
 require 'json'
+require 'set'
 
 module K8s
   API_SERVER = 'https://kubernetes.default.svc'
@@ -25,13 +26,21 @@ end
 
 class Helm
 
+  def run(cmd)
+    $logger.info cmd
+    response = `#{cmd}`
+    raise "command failed status=#{$?.exitstatus}" unless $?.success?
+    response
+  end
+
   def pull(release)
-    pkg = "/tmp/#{File.basename(release.name)}-#{release.chart_version}.tgz"
+    pkg = "/tmp/#{File.basename(release.chart_url)}-#{release.chart_version}.tgz"
     if File.exist?(pkg)
       $logger.info "already pulled #{pkg}"
     else
       cmd = "helm pull #{release.chart_url} --version #{release.chart_version} #{release.helm_pull_flags} --destination /tmp/"
-      $logger.info cmd
+      run(cmd)
+      raise "cannot find pkg=#{pkg}" unless File.exist?(pkg)
     end
     pkg
   end
@@ -41,24 +50,23 @@ class Helm
     values_file = Tempfile.new("#{release.name}.values.yaml")
     begin
       values_file.write(release.values)
-      cmd = "helm upgrade --install -f #{values_file.path} #{release.name} #{pkg}"
-      $logger.info cmd
+      cmd = "helm upgrade --install --wait -f #{values_file.path} #{release.name} #{pkg}"
+      run(cmd)
     ensure
        values_file.close
-       # values_file.unlink
+       values_file.unlink
     end
 
   end
 
   def delete(releaseName)
     cmd = "helm delete #{releaseName}"
-    $logger.info cmd
+    run(cmd)
   end
 
   def list
     cmd = "helm list --output json"
-    $logger.info cmd
-    response = "[]"
+    response = run(cmd)
     JSON.parse(response)
   end
 end
@@ -80,7 +88,8 @@ class HelmOperator
   end
 
   def reconcileOnce
-    to_delete = @helm.list
+    release_listed = Set.new(@helm.list.map{|r| r['name']})
+    release_wanted = Set.new
     request = Typhoeus::Request.new(@base_url, @req_opts)
     request.run # non-blocking
     response = request.response
@@ -90,11 +99,11 @@ class HelmOperator
     obj_list['items'].each do |obj|
       release = HelmRelease.new(obj)
       $logger.info "#{__method__} item=#{release.name}"
-      to_delete.delete(release.name)
-      @helm.install(release)
+      release_wanted.add(release.name)
+      @helm.install(release) unless release_listed.include?(release.name)
     end
-    to_delete.each do |releaseName|
-      $logger.info "remove unknown release #{releaseName}"
+    (release_listed - release_wanted).each do |releaseName|
+      $logger.info "remove unwanted release #{releaseName}"
       @helm.delete(releaseName)
     end
     resource_version = obj_list['metadata']['resourceVersion']

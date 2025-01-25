@@ -26,4 +26,4 @@ rules:
   # to run helm delete foo:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "delete"]
+    verbs: ["get", "delete", "update"]
