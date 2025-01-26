@@ -4,6 +4,12 @@ podman build -t operb -f Dockerfile
 podman push operb localhost:5000/operb:1.0
 ```
 
+# Test chart
+```
+helm package charts/foo
+helm push foo-1.0.0.tgz oci://10.88.0.1:5000/helm-charts --plain-http
+```
+
 # Helm
 ```
 kubectl create namespace operb

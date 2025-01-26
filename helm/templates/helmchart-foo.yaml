@@ -5,7 +5,7 @@ metadata:
   namespace: operb
 spec:
   chartURL: oci://10.88.0.1:5000/helm-charts/foo
-  chartVersion: 1.0.0
+  chartVersion: 1.0.1
   helmPullFlags: "--plain-http"
   values: |
     name: hello
