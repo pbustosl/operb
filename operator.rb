@@ -50,11 +50,12 @@ class Helm
     values_file = Tempfile.new("#{release.name}.values.yaml")
     begin
       values_file.write(release.values)
+      values_file.flush
       cmd = "helm upgrade --install --wait -f #{values_file.path} #{release.name} #{pkg}"
       run(cmd)
     ensure
-       values_file.close
-       values_file.unlink
+      values_file.close
+      values_file.unlink
     end
 
   end
